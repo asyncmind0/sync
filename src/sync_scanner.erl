@@ -3,6 +3,7 @@
 -module(sync_scanner).
 -behaviour(gen_server).
 -include_lib("kernel/include/file.hrl").
+-include_lib("kernel/include/logger.hrl").
 
 -compile([export_all, nowarn_export_all]).
 
@@ -731,12 +732,20 @@ print_results(_Module, SrcFile, [], Warnings) ->
     sync_notify:log_warnings(Msg);
 
 print_results(_Module, SrcFile, Errors, Warnings) ->
-    Msg = [
-        format_errors(SrcFile, Errors, Warnings)
-    ],
-    sync_notify:growl_errors(growl_format_errors(Errors, Warnings)),
-    sync_notify:log_errors(Msg).
 
+    %% Use logger report + report_cb so the formatter can render the
+    %% preformatted iolist produced by format_errors/3 (preserves layout).
+    Report = #{src => SrcFile, errors => Errors, warnings => Warnings},
+    ?LOG_ERROR(
+        Report,
+        #{
+          report_cb => fun(_R) ->
+                           %% Pretty iolist used by your custom formatter (~ts)
+                           format_errors(SrcFile, Errors, Warnings)
+                       end
+        }
+    ),
+    sync_notify:growl_errors(growl_format_errors(Errors, Warnings)).
 % ☢ ☣ ⚠ ☠
 message_prefix(error) ->
     "☠ Error";

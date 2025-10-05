@@ -17,6 +17,7 @@
     log_warnings/2
 ]).
 
+-include_lib("kernel/include/logger.hrl").
 startup(Growl) ->
     case {Growl, os:type()} of
         {none, _} ->
@@ -47,21 +48,21 @@ log_success(Msg, Vars) ->
 
 log_success(Message) ->
     can_we_log(success)
-        andalso error_logger:info_msg(lists:flatten(Message)).
+        andalso ?LOG_INFO("~p",[lists:flatten(Message)]).
 
 log_errors(Msg, Vars) ->
     log_errors(io_lib:format(Msg, Vars)).
 
 log_errors(Message) ->
     can_we_log(errors)
-        andalso error_logger:error_msg(lists:flatten(Message)).
+        andalso ?LOG_ERROR("~p",[lists:flatten(Message)]).
 
 log_warnings(Msg, Vars) ->
     log_warnings(io_lib:format(Msg, Vars)).
 
 log_warnings(Message) ->
     can_we_log(warnings)
-        andalso error_logger:warning_msg(lists:flatten(Message)).
+        andalso ?LOG_WARNING("~p",[lists:flatten(Message)]).
 
 %%% PRIVATE FUNCTIONS %%%
 
